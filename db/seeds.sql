@@ -1,0 +1,1 @@
+--run with [mysql -u root -p < db/seeds.sql]--
