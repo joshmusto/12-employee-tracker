@@ -17,8 +17,6 @@ usage instructions
 <br>![screenshot of program in-use](src/screenshot.PNG)
 
 ## Credits
-
-Built using provided front end code.
 <br>Built in part using [Inquirer.js](https://www.npmjs.com/package/inquirer/v/8.2.4)
 <br>Built in part using [console.table](https://www.npmjs.com/package/console.table)
 <br>Built in part using [MySQL2](https://www.npmjs.com/package/mysql2)
