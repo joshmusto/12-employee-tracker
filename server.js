@@ -1,6 +1,6 @@
 //required for functionality
 const inquirer = require('inquirer');
-const cTable = require('console.tab');
+const cTable = require('console.table');
 //print format for cTable
 /* 
 console.table([
@@ -26,6 +26,18 @@ const connection = mysql.createConnection(
     },
     console.log('Connected to staff_db')
 );
+
+
+// print database
+// Query database
+connection.query('SELECT * FROM department', function (err, results) {
+    //department
+    console.log(results);
+  });
+
+//role
+
+//employee
 
 //show options
 //view all departments
