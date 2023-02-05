@@ -1,12 +1,12 @@
---run with [mysql -u root -p < db/seeds.sql]--
+/* run with [mysql -u root -p < db/seeds.sql] */
 USE staff_db;
---department seeds--
+/* department seeds */
 INSERT INTO department (id, name)
 VALUES (1, "Production"),
        (2, "Quality Assurance"),
        (3, "Concept");
        
---role seeds--
+/* role seeds */
 INSERT INTO role (id, title, salary, department_id)
 VALUES (1, "Production Coordinator", "$100,000", 1),
        (2, "Production Engineer", "$80,000", 1),
@@ -15,7 +15,7 @@ VALUES (1, "Production Coordinator", "$100,000", 1),
        (5, "Concept Lead", "$100,000", 3),
        (6, "Concept Engineer", "$80,000", 3);
 
---employee seeds--
+/* employee seeds */
 INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
 VALUES (1, "Kate", "Kaplan", 1, NULL),
        (2, "Brent", "Singleton", 2, 1),
