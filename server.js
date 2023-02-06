@@ -43,27 +43,47 @@ const connection = mysql.createConnection(
     //add department
 
 //customizable query function
-const customQuery = (dataTarget, tableTarget, idTarget) => {
-    connection.query(`SELECT ${dataTarget} FROM ${tableTarget} WHERE id = ${idTarget}`, function (err, results) {
-        return results;
-    })
+//currently doesn't work, can't actually return data
+/*
+function customQuery(dataTarget, tableTarget, idTarget) {
+    //define the query
+    const sql = `SELECT ${dataTarget} FROM ${tableTarget} WHERE id = ${idTarget}`;
+    
+    //execute the query
+    const queryValue = connection.query(sql, (err, results) => {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        else return JSON.stringify(results.fields);
+    });
 }
-console.log(customQuery("*", "role", "1"));
+console.log(customQuery("title", "role", 1));
+*/
 
 //view all employees
 //formatted table with employee id's, first name, last name, job titles, departments, salaries, respective managers
 const tableEmployees = () => {
-    connection.query('SELECT * FROM employee', function (err, results) {
-        console.table([
-            {
-                id: results[0].id,
-                first_name: results[0].first_name,
-                last_name: results[0].last_name,
-                title: customQuery("title", "role", results[0].role_id),
-                manager_id: results[0].manager_id,
+    connection.query({ sql: 'SELECT * FROM employee', rowsAsArray: true }, function (err, results) {
+        //function to replace role_id and manager_id with names
+         function fixEmployeeArray(currentEmployee) {
+            //role
+            if (currentEmployee[3] == 1) currentEmployee[3] = "Production Coordinator"
+            else if (currentEmployee[3] == 2) currentEmployee[3] = "Production Engineer"
+            else if (currentEmployee[3] == 3) currentEmployee[3] = "QA Lead"
+            else if (currentEmployee[3] == 4) currentEmployee[3] = "QA Tester"
+            else if (currentEmployee[3] == 5) currentEmployee[3] = "Concept Lead"
+            else if (currentEmployee[3] == 6) currentEmployee[3] = "Concept Engineer";
+            //manager
+            if (currentEmployee[4] != null) {
+                currentEmployee[4] = results[currentEmployee[4]-1][1] + ' ' + results[currentEmployee[4]-1][2];
             }
-        ])
-    })
+        }
+        results.forEach(fixEmployeeArray)
+        //print the table
+        console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Manager'],
+        results);
+    });
 }
 tableEmployees();
 
