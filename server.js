@@ -44,45 +44,55 @@ const connection = mysql.createConnection(
 
 //customizable query function
 //currently doesn't work, can't actually return data
-/*
-function customQuery(dataTarget, tableTarget, idTarget) {
+
+const customQuery = async(dataTarget, tableTarget, idTarget) => {
     //define the query
     const sql = `SELECT ${dataTarget} FROM ${tableTarget} WHERE id = ${idTarget}`;
     
-    //execute the query
-    const queryValue = connection.query(sql, (err, results) => {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        else return JSON.stringify(results.fields);
-    });
+    return new Promise((resolve, reject) => {
+        //execute the query
+        const queryValue = connection.query({ sql:sql, rowsAsArray: true }, (err, results) => {
+            if (err) {
+                console.log(err);
+            }
+            else  {
+                resolve(results);
+            }
+        });
+    })
 }
-console.log(customQuery("title", "role", 1));
-*/
+async function createCustomQuery(dataTarget, tableTarget, idTarget) {
+    const data = await customQuery(dataTarget, tableTarget, idTarget);
+    return data;
+}
+
 
 //view all employees
 //formatted table with employee id's, first name, last name, job titles, departments, salaries, respective managers
 const tableEmployees = () => {
-    connection.query({ sql: 'SELECT * FROM employee', rowsAsArray: true }, function (err, results) {
+    connection.query({ sql:'SELECT * FROM employee', rowsAsArray: true }, function (err, results) {
+        
         //function to replace role_id and manager_id with names
-         function fixEmployeeArray(currentEmployee) {
+        async function fixEmployeeArray(currentEmployee) {
             //role
-            if (currentEmployee[3] == 1) currentEmployee[3] = "Production Coordinator"
-            else if (currentEmployee[3] == 2) currentEmployee[3] = "Production Engineer"
-            else if (currentEmployee[3] == 3) currentEmployee[3] = "QA Lead"
-            else if (currentEmployee[3] == 4) currentEmployee[3] = "QA Tester"
-            else if (currentEmployee[3] == 5) currentEmployee[3] = "Concept Lead"
-            else if (currentEmployee[3] == 6) currentEmployee[3] = "Concept Engineer";
+            let employeeId = currentEmployee[3];
+            currentEmployee[3] = await createCustomQuery("title", "role", employeeId);
+
             //manager
             if (currentEmployee[4] != null) {
                 currentEmployee[4] = results[currentEmployee[4]-1][1] + ' ' + results[currentEmployee[4]-1][2];
             }
         }
-        results.forEach(fixEmployeeArray)
-        //print the table
-        console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Manager'],
-        results);
+        //get employee job names
+        results.forEach(fixEmployeeArray);
+    
+        //print the table, as a function to be used with setInterval
+        function printEmployeeTable() {
+            console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Manager'],
+            results);
+        }
+        setTimeout(() => printEmployeeTable(), 1000);
+        
     });
 }
 tableEmployees();
