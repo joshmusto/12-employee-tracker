@@ -42,9 +42,7 @@ const connection = mysql.createConnection(
     //view all departments
     //add department
 
-//customizable query function
-//currently doesn't work, can't actually return data
-
+//customizable query function, call createCustomQuery
 const customQuery = async(dataTarget, tableTarget, idTarget) => {
     //define the query
     const sql = `SELECT ${dataTarget} FROM ${tableTarget} WHERE id = ${idTarget}`;
@@ -71,16 +69,22 @@ async function createCustomQuery(dataTarget, tableTarget, idTarget) {
 //formatted table with employee id's, first name, last name, job titles, departments, salaries, respective managers
 const tableEmployees = () => {
     connection.query({ sql:'SELECT * FROM employee', rowsAsArray: true }, function (err, results) {
-        
-        //function to replace role_id and manager_id with names
+        //function to replace incomplete data and get additional data
         async function fixEmployeeArray(currentEmployee) {
             //role
             let employeeId = currentEmployee[3];
             currentEmployee[3] = await createCustomQuery("title", "role", employeeId);
 
+            //department
+            let employeeDepartment = await createCustomQuery("department_id", "role", employeeId);
+            currentEmployee.splice(4, 0, await createCustomQuery("name", "department", employeeDepartment));
+
+            //salary
+            currentEmployee.splice(5, 0, await createCustomQuery("salary", "role", employeeId));
+
             //manager
-            if (currentEmployee[4] != null) {
-                currentEmployee[4] = results[currentEmployee[4]-1][1] + ' ' + results[currentEmployee[4]-1][2];
+            if (currentEmployee[6] != null) {
+                currentEmployee[6] = results[currentEmployee[6]-1][1] + ' ' + results[currentEmployee[6]-1][2];
             }
         }
         //get employee job names
@@ -88,18 +92,17 @@ const tableEmployees = () => {
     
         //print the table, as a function to be used with setInterval
         function printEmployeeTable() {
-            console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Manager'],
+            console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Department', 'Salary', 'Manager'],
             results);
         }
         setTimeout(() => printEmployeeTable(), 1000);
         
     });
 }
-tableEmployees();
+//tableEmployees();
 
 //add employee
 //first name, last name, role, manager
-
 
 //update employee role
 //select employee, change role
@@ -107,7 +110,22 @@ tableEmployees();
 
 //view all roles
 //show job title, id, department, salary
-
+const tableRoles = () => {
+    connection.query({ sql:'SELECT * FROM role', rowsAsArray: true }, function (err, results) {
+        async function fixRoleArray(currentRole) {
+            currentRole[3] = await createCustomQuery('name', 'department', currentRole[3]);
+        }
+        function printRoleTable() {
+            console.table(['ID', 'Title', 'Salary', 'Department'],
+            results);
+        }
+        //fix the role array
+        results.forEach(fixRoleArray);
+        //print the table after a bit
+        setTimeout(() => printRoleTable(), 1000);
+    })
+}
+//tableRoles();
 
 //add role
 //enter name, salary, department, add to database
