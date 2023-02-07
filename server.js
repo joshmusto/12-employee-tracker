@@ -41,6 +41,42 @@ const connection = mysql.createConnection(
     //add role
     //view all departments
     //add department
+function runProgram() {
+    inquirer
+    .prompt([
+        {
+            type: 'list',
+            message: 'What would you like to do?',
+            name: 'chooseFunction',
+            choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department'],
+        }
+    ])
+    .then(function(response) {
+        //perform function based on response value
+        let selection = response.chooseFunction;
+        if (selection=='View All Employees') {
+            tableEmployees();
+        }
+        else if (selection=='Add Employee') {
+
+        }
+        else if (selection=='Update Employee Role') {
+            
+        }
+        else if (selection=='View All Roles') {
+            tableRoles();
+        }
+        else if (selection=='Add Role') {
+            
+        }
+        else if (selection=='View All Departments') {
+            tableDepartments();
+        }
+        else if (selection=='Add Department') {
+            
+        }
+    })
+}
 
 //customizable query function, call createCustomQuery
 const customQuery = async(dataTarget, tableTarget, idTarget) => {
@@ -133,7 +169,20 @@ const tableRoles = () => {
 
 //view all departments
 //formatted table with names and department id's
-
+const tableDepartments = () => {
+    connection.query({ sql:'SELECT * FROM department', rowsAsArray: true }, function (err, results) {
+        function printDepartmentArray() {
+            console.table(['ID', 'Department Name'],
+            results);
+        }
+        //print the table after a bit
+        setTimeout(() => printDepartmentArray(), 1000);
+    })
+}
+//tableDepartments();
 
 //add department
 //enter name, add to database
+
+//actually run the program
+runProgram();
