@@ -48,7 +48,7 @@ function runProgram() {
             type: 'list',
             message: 'What would you like to do?',
             name: 'chooseFunction',
-            choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department'],
+            choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Exit Program'],
         }
     ])
     .then(function(response) {
@@ -67,13 +67,17 @@ function runProgram() {
             tableRoles();
         }
         else if (selection=='Add Role') {
-            
+            addRole();
         }
         else if (selection=='View All Departments') {
             tableDepartments();
         }
         else if (selection=='Add Department') {
-            
+            addDepartment();
+        }
+        else if (selection=='Exit Program') {
+            console.log('Thank you for using the program!');
+            console.log('Please press [Ctrl + C] to fully exit the program.')
         }
     })
 }
@@ -99,7 +103,6 @@ async function createCustomQuery(dataTarget, tableTarget, idTarget) {
     const data = await customQuery(dataTarget, tableTarget, idTarget);
     return data;
 }
-
 
 //view all employees
 //formatted table with employee id's, first name, last name, job titles, departments, salaries, respective managers
@@ -131,7 +134,10 @@ const tableEmployees = () => {
             console.table(['ID', 'First Name', 'Last Name', 'Job Title', 'Department', 'Salary', 'Manager'],
             results);
         }
-        setTimeout(() => printEmployeeTable(), 1000);
+        setTimeout(() => {
+            printEmployeeTable();
+            runProgram();
+        }, 1000);
         
     });
 }
@@ -158,14 +164,56 @@ const tableRoles = () => {
         //fix the role array
         results.forEach(fixRoleArray);
         //print the table after a bit
-        setTimeout(() => printRoleTable(), 1000);
+        setTimeout(() => {
+            printRoleTable();
+            runProgram();
+        }, 1000);
     })
 }
 //tableRoles();
 
 //add role
 //enter name, salary, department, add to database
-
+const addRole = () => {
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: "What's the name of the role?",
+            name: 'newRoleName',
+        },
+        {
+            type: 'input',
+            message: "What's the salary for the role? (Please format like the following: $50,000, $100,000, etc.)",
+            name: 'newRoleSalary',
+        },
+        {
+            type: 'number',
+            message: "What's the ID of the department this role belongs to?",
+            name: 'newRoleDepartment',
+            validate: async (input) => {
+                const roleDepartmentCheck = await createCustomQuery("id", "department", input);
+                if (roleDepartmentCheck == "") {
+                    return 'There is no department with that ID. Please try again.'
+                }
+                else {
+                    return true;
+                }
+            }
+        }
+    ])
+    .then(function(response) {
+        connection.query(`INSERT INTO role (title, salary, department_id) VALUES ('${response.newRoleName}', '${response.newRoleSalary}', '${response.newRoleDepartment}')`, function(err, result) {
+            if (!err) {
+                console.log(`New role, ${response.newRoleName}, has been added`);
+                runProgram();
+            }
+            else {
+                console.log(err);
+            }
+        });
+    })
+}
 
 //view all departments
 //formatted table with names and department id's
@@ -175,14 +223,39 @@ const tableDepartments = () => {
             console.table(['ID', 'Department Name'],
             results);
         }
-        //print the table after a bit
-        setTimeout(() => printDepartmentArray(), 1000);
+        //print the table and restart the program after one second
+        setTimeout(() => {
+            printDepartmentArray();
+            runProgram();
+        }, 1000);
     })
 }
 //tableDepartments();
 
 //add department
 //enter name, add to database
+const addDepartment = () => {
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: "What's the name of the department?",
+            name: 'newDepartment',
+        }
+    ])
+    .then(function(response) {
+        let newDepartment = response.newDepartment;
+        connection.query(`INSERT INTO department (name) VALUES ('${newDepartment}')`, function(err, result) {
+            if (!err) {
+                console.log(`New department, ${newDepartment}, has been added`);
+                runProgram();
+            }
+            else {
+                console.log(err);
+            }
+        });
+    })
+}
 
 //actually run the program
 runProgram();
