@@ -58,10 +58,10 @@ function runProgram() {
             tableEmployees();
         }
         else if (selection=='Add Employee') {
-
+            addEmployee();
         }
         else if (selection=='Update Employee Role') {
-            
+            updateEmployee();
         }
         else if (selection=='View All Roles') {
             tableRoles();
@@ -141,14 +141,141 @@ const tableEmployees = () => {
         
     });
 }
-//tableEmployees();
 
 //add employee
 //first name, last name, role, manager
+const addEmployee = () => {
+    inquirer
+    .prompt([
+        {
+            type: "input",
+            message: "What is the employee's first name?",
+            name: "newEmployeeFirstName"
+        },
+        {
+            type: "input",
+            message: "What is the employee's last name?",
+            name: "newEmployeeLastName"
+        },
+        {
+            type: "number",
+            message: "What is the ID for the employee's role?",
+            name: "newEmployeeRole",
+            validate: async (input) => {
+                const roleDepartmentCheck = await createCustomQuery("id", "role", input);
+                if (roleDepartmentCheck == "") {
+                    return 'There is role with that ID. Please try again.'
+                }
+                else {
+                    return true;
+                }
+            }
+        },
+        {
+            type: "confirm",
+            message: "Does this employee have an assigned manager?",
+            name: "newEmployeeHasManager"
+        }
+    ])
+    .then(function(response) {
+        //save responses as variables for ease
+        let newEmployeeFullName = `${response.newEmployeeFirstName} ${response.newEmployeeLastName}`
+        let newEmployeeFirstName = response.newEmployeeFirstName;
+        let newEmployeeLastName = response.newEmployeeLastName;
+        let newEmployeeRole = response.newEmployeeRole;
+        //adding employee with no manager
+        if (!response.newEmployeeHasManager) {
+            connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ('${newEmployeeFirstName}', '${newEmployeeLastName}', '${newEmployeeRole}')`, function(err, result) {
+                if (!err) {
+                    console.log(`New employee, ${newEmployeeFullName}, has been added`);
+                    runProgram();
+                }
+                else {
+                    console.log(err);
+                }
+            });
+        }
+        //adding employee with manager
+        else {
+            inquirer
+            .prompt([
+                {
+                    type: "number",
+                    message: "What is the ID of the employee's manager?",
+                    name: "newEmployeeManagerID",
+                    validate: async (input) => {
+                        const employeeManagerCheck = await createCustomQuery("id", "employee", input);
+                        if (employeeManagerCheck == "") {
+                            return 'There is manager with that ID. Please try again.'
+                        }
+                        else {
+                            return true;
+                        }
+                    }
+                }
+            ])
+            .then(function(response) {
+                let newEmployeeManager = response.newEmployeeManagerID;
+                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${newEmployeeFirstName}', '${newEmployeeLastName}', '${newEmployeeRole}', '${newEmployeeManager}')`, function(err, result) {
+                    if (!err) {
+                        console.log(`New employee, ${newEmployeeFullName}, has been added`);
+                        runProgram();
+                    }
+                    else {
+                        console.log(err);
+                    }
+                });
+            })
+        }
+
+        
+    })
+}
 
 //update employee role
 //select employee, change role
-
+const updateEmployee = () => {
+    //inquirer prompt to select employee
+    inquirer   
+        .prompt([
+            {
+                type: 'number',
+                message: "Enter the ID for the employee you'd like to update.",
+                name: 'updateEmployeeID'
+            }
+        ])
+        .then(async function(response) {
+            //get employee name to confirm the right employee is selected
+            let updateEmployeeID = response.updateEmployeeID;
+            let updateEmployeeData = await createCustomQuery("*", "employee", `${updateEmployeeID}`);
+            let updateEmployeeName = `${updateEmployeeData[0][1]} ${updateEmployeeData[0][2]}`;
+            //inquirer prompt for new role ID
+            async function inputNewID() {
+                inquirer
+                .prompt([
+                    {
+                        type: "number",
+                        message: `Selected ${updateEmployeeName}. Enter the ID for their new role.`,
+                        name: 'updateEmployeeRoleID'
+                    }
+                ])
+                //update the ID
+                .then(function(response) {
+                    connection.query(`UPDATE employee SET role_id = ${response.updateEmployeeRoleID} WHERE id =  ${updateEmployeeID}`, function(err, result) {
+                        if (err) {
+                            console.log('That ID is not associated with any role.');
+                            inputNewID();
+                        }
+                        else {
+                            console.log(`${updateEmployeeName}'s role has been updated.`);
+                            runProgram();
+                        }
+                    }); 
+                })
+            }
+            inputNewID();
+        })
+}
 
 //view all roles
 //show job title, id, department, salary
@@ -170,7 +297,6 @@ const tableRoles = () => {
         }, 1000);
     })
 }
-//tableRoles();
 
 //add role
 //enter name, salary, department, add to database
